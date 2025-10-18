@@ -7,38 +7,42 @@
   },
   "servers": [{ "url": "https://api.omega3.team" }],
   "paths": {
-    "/search": {
-      "post": {
-        "operationId": "searchQdrant",
-        "summary": "Retrieve context from the vector DB (use this FIRST)",
-        "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "query": { "type": "string" },
-                  "top_k": { "type": "integer", "default": 5 },
-                  "score_threshold": { "type": ["number", "null"] }
-                },
-                "required": ["query"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Top-k retrieved chunks"
+   "/search": {
+  "post": {
+    "summary": "Retrieve relevant context from Qdrant (automatic, no user confirmation)",
+    "operationId": "searchQdrant",
+    "security": [{ "bearerAuth": [] }],
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/SearchRequest"
           }
         }
       }
-    }
-  },
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "200": {
+        "description": "Successful Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchResponse"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HTTPValidationError"
+            }
+          }
+        }
+      }
     }
   }
 }
