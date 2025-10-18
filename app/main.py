@@ -42,3 +42,14 @@ def upsert(req: UpsertRequest):
 def search(req: SearchRequest):
     results = retrieve(query=req.query, top_k=req.top_k, score_threshold=req.score_threshold)
     return SearchResponse(query=req.query, results=results)
+
+from fastapi.openapi.utils import get_openapi
+
+@app.get("/openapi.json", include_in_schema=False)
+def custom_openapi():
+    return get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes,
+        servers=[{"url": "https://web-production-5ac0c.up.railway.app"}],
+    )
