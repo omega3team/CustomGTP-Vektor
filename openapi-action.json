@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "description": "Retrieve top-k context from Qdrant, to be used FIRST for answering user questions."
   },
-  "servers": [{ "url": "https://your-railway-domain.up.railway.app" }],
+  "servers": [{ "url": "https://web-production-5ac0c.up.railway.app" }],
   "paths": {
     "/search": {
       "post": {
