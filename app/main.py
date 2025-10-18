@@ -29,7 +29,7 @@ app.add_middleware(
 )
 
 # ✅ Token-Überprüfung
-def verify_auth(authorization: str = Header(default="")):
+def verify_auth(authorization: str = Header(default="", include_in_schema=False)):
     if not AUTH_TOKEN:
         return
     if not authorization.startswith("Bearer "):
