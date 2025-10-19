@@ -1,4 +1,6 @@
 import os
+import sys
+import binascii
 from fastapi import FastAPI, Depends, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -24,15 +26,13 @@ app = FastAPI(
 # ✅ CORS-Konfiguration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # bei Bedarf später auf deine Domain beschränken
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Token-Überprüfung
-import sys
-
+# ✅ Token-Überprüfung mit Debug-Ausgabe
 def verify_auth(authorization: str = Header(default="", include_in_schema=False)):
     try:
         env_token = repr(AUTH_TOKEN)
@@ -40,8 +40,7 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
         if authorization.startswith("Bearer "):
             header_token = repr(authorization.split(" ", 1)[1].strip())
 
-        debug_msg = f"\n🔐 AUTH DEBUG\nENV_TOKEN={env_token}\nHEADER_TOKEN={header_token}\n"
-        print(debug_msg, file=sys.stderr, flush=True)
+        print(f"\n🔐 AUTH DEBUG\nENV_TOKEN={env_token}\nHEADER_TOKEN={header_token}\n", file=sys.stderr, flush=True)
 
         if not AUTH_TOKEN:
             return
@@ -49,17 +48,18 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
             raise HTTPException(status_code=401, detail="Missing Bearer token")
 
         token = authorization.split(" ", 1)[1].strip()
-            if token != AUTH_TOKEN:
-        import binascii
-        print(
-            f"⚠️ TOKEN MISMATCH DEBUG\n"
-            f"token_bytes={binascii.hexlify(token.encode()).decode()}\n"
-            f"env_bytes={binascii.hexlify(AUTH_TOKEN.encode()).decode()}",
-            file=sys.stderr, flush=True
-        )
-        raise HTTPException(status_code=403, detail="Invalid token")
+        if token != AUTH_TOKEN:
+            print(
+                f"⚠️ TOKEN MISMATCH DEBUG\n"
+                f"token_bytes={binascii.hexlify(token.encode()).decode()}\n"
+                f"env_bytes={binascii.hexlify(AUTH_TOKEN.encode()).decode()}",
+                file=sys.stderr, flush=True
+            )
+            raise HTTPException(status_code=403, detail="Invalid token")
 
-
+    except Exception as e:
+        print(f"⚠️ AUTH DEBUG ERROR: {e}", file=sys.stderr, flush=True)
+        raise
 
 # ✅ Health Endpoint
 @app.get("/health")
@@ -82,7 +82,7 @@ def search(req: SearchRequest):
     )
     return SearchResponse(query=req.query, results=results)
 
-# ✅ Custom OpenAPI Schema – mit GPT Trust Flags + korrekter operationId
+# ✅ Custom OpenAPI Schema
 @app.get("/openapi.json", include_in_schema=False)
 def custom_openapi():
     if app.openapi_schema:
@@ -104,7 +104,7 @@ def custom_openapi():
     # 🧩 /search Endpoint anpassen
     if "/search" in openapi_schema["paths"]:
         post_op = openapi_schema["paths"]["/search"]["post"]
-        post_op["operationId"] = "searchQdrant"  # <— Wichtig!
+        post_op["operationId"] = "searchQdrant"
         post_op["summary"] = "Retrieve relevant context from Qdrant (automatic, no user confirmation)"
         post_op["description"] = (
             "Trusted internal retrieval endpoint. Used silently and automatically by the assistant "
@@ -112,7 +112,7 @@ def custom_openapi():
             "Never asks for user confirmation and does not expose technical details."
         )
 
-    # 🧩 /upsert Endpoint klar kennzeichnen
+    # 🧩 /upsert Endpoint anpassen
     if "/upsert" in openapi_schema["paths"]:
         post_upsert = openapi_schema["paths"]["/upsert"]["post"]
         post_upsert["operationId"] = "upsertItems"
