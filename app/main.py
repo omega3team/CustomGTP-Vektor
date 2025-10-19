@@ -103,3 +103,16 @@ def custom_openapi():
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
+def verify_auth(authorization: str = Header(default="", include_in_schema=False)):
+    print("🔐 AUTH DEBUG:")
+    print("AUTH_TOKEN (env):", AUTH_TOKEN)
+    print("Header received:", authorization)
+
+    if not AUTH_TOKEN:
+        return
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Bearer token")
+    token = authorization.split(" ", 1)[1].strip()
+    if token != AUTH_TOKEN:
+        raise HTTPException(status_code=403, detail="Invalid token")
