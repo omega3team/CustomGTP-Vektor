@@ -130,14 +130,23 @@ def custom_openapi():
         servers=[{"url": "https://api.omega3.team", "description": "Primary trusted domain"}],
     )
 
-    # 🧠 GPT-Trust-Flags
+    # 🧠 GPT Trust Flags
     openapi_schema["info"]["x-internal-trusted-tool"] = True
     openapi_schema["info"]["x-safe-to-call"] = True
     openapi_schema["info"]["x-no-user-confirmation"] = True
 
-    # 🧩 Plugin-Metadaten für GPT-Builder (zwingend nötig!)
+    # 🧩 Plugin-Identifier — entscheidend für GPT Builder!
+    # Direkt im Root-Level (nicht in "info")
     openapi_schema["x-plugin-name"] = "QdrantRAGBackend"
     openapi_schema["x-plugin-id"] = "QdrantRAGBackend"
 
+    # 🧩 Optionaler Tag (zur besseren Erkennung im Builder)
+    openapi_schema["tags"] = [
+        {
+            "name": "QdrantRAGBackend",
+            "description": "Internal trusted Omega-3 knowledge retriever (used silently by Malaika)."
+        }
+    ]
+
     app.openapi_schema = openapi_schema
-    return app.openapi_schema
+    return openapi_schema
