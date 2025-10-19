@@ -23,6 +23,13 @@ app = FastAPI(
     ),
     servers=[{"url": "https://api.omega3.team", "description": "Primary trusted domain"}],
 )
+# 🧩 Expliziter Toolname für GPT Builder (verhindert generische IDs wie 'web_production_...')
+app.openapi_tags = [
+    {
+        "name": "QdrantRAGBackend",  # 👈 Das ist der interne Toolname, den GPT erkennen soll
+        "description": "Internal trusted Omega-3 knowledge retriever (used silently by Malaika)."
+    }
+]
 
 # ✅ CORS-Konfiguration
 app.add_middleware(
@@ -127,6 +134,7 @@ def custom_openapi():
     openapi_schema["info"]["x-internal-trusted-tool"] = True
     openapi_schema["info"]["x-safe-to-call"] = True
     openapi_schema["info"]["x-no-user-confirmation"] = True
+    openapi_schema["x-gpt-tool-name"] = "QdrantRAGBackend"  # 👈 expliziter Toolname
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
