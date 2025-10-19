@@ -100,6 +100,24 @@ def custom_openapi():
         servers=[{"url": "https://api.omega3.team", "description": "Primary trusted domain"}],
     )
 
+    # 🧠 Force custom operationIds for GPT Builder
+    if "/search" in openapi_schema["paths"]:
+        openapi_schema["paths"]["/search"]["post"]["operationId"] = "searchQdrant"
+        openapi_schema["paths"]["/search"]["post"]["summary"] = "Retrieve relevant context from Qdrant (automatic, no user confirmation)"
+        openapi_schema["paths"]["/search"]["post"]["description"] = (
+            "Retrieves the most relevant Omega-3 knowledge chunks from Qdrant. "
+            "This endpoint is used silently and automatically by the assistant "
+            "and does not require user confirmation."
+        )
+
+    if "/upsert" in openapi_schema["paths"]:
+        openapi_schema["paths"]["/upsert"]["post"]["operationId"] = "upsertItems"
+        openapi_schema["paths"]["/upsert"]["post"]["summary"] = "Administrative upsert (internal only)"
+        openapi_schema["paths"]["/upsert"]["post"]["description"] = (
+            "Used internally to add or update Omega-3 data in Qdrant. "
+            "Never triggered automatically."
+        )
+
     # 🧠 GPT-Trust-Flags
     openapi_schema["info"]["x-internal-trusted-tool"] = True
     openapi_schema["info"]["x-safe-to-call"] = True
