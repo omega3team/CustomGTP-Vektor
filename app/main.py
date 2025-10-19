@@ -49,12 +49,16 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
             raise HTTPException(status_code=401, detail="Missing Bearer token")
 
         token = authorization.split(" ", 1)[1].strip()
-        if token != AUTH_TOKEN:
-            raise HTTPException(status_code=403, detail="Invalid token")
+            if token != AUTH_TOKEN:
+        import binascii
+        print(
+            f"⚠️ TOKEN MISMATCH DEBUG\n"
+            f"token_bytes={binascii.hexlify(token.encode()).decode()}\n"
+            f"env_bytes={binascii.hexlify(AUTH_TOKEN.encode()).decode()}",
+            file=sys.stderr, flush=True
+        )
+        raise HTTPException(status_code=403, detail="Invalid token")
 
-    except Exception as e:
-        print(f"⚠️ AUTH DEBUG ERROR: {e}", file=sys.stderr, flush=True)
-        raise
 
 
 # ✅ Health Endpoint
