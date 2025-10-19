@@ -47,19 +47,23 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
         if not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="Missing Bearer token")
 
-        token = authorization.split(" ", 1)[1].strip()
-        if token != AUTH_TOKEN:
+	token = authorization.split(" ", 1)[1].strip()
+
+        # --- BYTEWEISER VERGLEICH ---
+        token_bytes = token.encode("utf-8")
+        env_bytes = AUTH_TOKEN.encode("utf-8")
+
+        if token_bytes != env_bytes:
+            import binascii
             print(
-                f"⚠️ TOKEN MISMATCH DEBUG\n"
-                f"token_bytes={binascii.hexlify(token.encode()).decode()}\n"
-                f"env_bytes={binascii.hexlify(AUTH_TOKEN.encode()).decode()}",
+                f"⚠️ TOKEN BYTE MISMATCH\n"
+                f"token_hex={binascii.hexlify(token_bytes).decode()}\n"
+                f"env_hex={binascii.hexlify(env_bytes).decode()}",
                 file=sys.stderr, flush=True
             )
             raise HTTPException(status_code=403, detail="Invalid token")
 
-    except Exception as e:
-        print(f"⚠️ AUTH DEBUG ERROR: {e}", file=sys.stderr, flush=True)
-        raise
+        print("✅ TOKEN MATCH — BYTES ARE IDENTICAL", file=sys.stderr, flush=True)
 
 # ✅ Health Endpoint
 @app.get("/health")
