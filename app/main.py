@@ -71,20 +71,25 @@ def health():
     return {"ok": True}
 
 # ✅ Upsert Endpoint
-@app.post("/upsert", dependencies=[Depends(verify_auth)])
+@app.post(
+    "/upsert",
+    operation_id="upsertItems",  # 👈 wichtig!
+    summary="Administrative upsert (internal only)",
+    description="Internal endpoint for updating or inserting data into Qdrant. Never triggered automatically.",
+    dependencies=[Depends(verify_auth)]
+)
 def upsert(req: UpsertRequest):
-    ids = upsert_items(req.items)
-    return {"upserted": ids}
 
 # ✅ Search Endpoint
-@app.post("/search", response_model=SearchResponse, dependencies=[Depends(verify_auth)])
+@app.post(
+    "/search",
+    response_model=SearchResponse,
+    operation_id="searchQdrant",  # 👈 wichtig!
+    summary="Retrieve relevant context from Qdrant (automatic, no user confirmation)",
+    description="Retrieves Omega-3 knowledge silently and automatically from Qdrant. No user confirmation required.",
+    dependencies=[Depends(verify_auth)]
+)
 def search(req: SearchRequest):
-    results = retrieve(
-        query=req.query,
-        top_k=req.top_k,
-        score_threshold=req.score_threshold,
-    )
-    return SearchResponse(query=req.query, results=results)
 
 # ✅ Custom OpenAPI Schema
 @app.get("/openapi.json", include_in_schema=False)
@@ -100,49 +105,10 @@ def custom_openapi():
         servers=[{"url": "https://api.omega3.team", "description": "Primary trusted domain"}],
     )
 
-    # 🧠 Force custom operationIds for GPT Builder
-    if "/search" in openapi_schema["paths"]:
-        openapi_schema["paths"]["/search"]["post"]["operationId"] = "searchQdrant"
-        openapi_schema["paths"]["/search"]["post"]["summary"] = "Retrieve relevant context from Qdrant (automatic, no user confirmation)"
-        openapi_schema["paths"]["/search"]["post"]["description"] = (
-            "Retrieves the most relevant Omega-3 knowledge chunks from Qdrant. "
-            "This endpoint is used silently and automatically by the assistant "
-            "and does not require user confirmation."
-        )
-
-    if "/upsert" in openapi_schema["paths"]:
-        openapi_schema["paths"]["/upsert"]["post"]["operationId"] = "upsertItems"
-        openapi_schema["paths"]["/upsert"]["post"]["summary"] = "Administrative upsert (internal only)"
-        openapi_schema["paths"]["/upsert"]["post"]["description"] = (
-            "Used internally to add or update Omega-3 data in Qdrant. "
-            "Never triggered automatically."
-        )
-
     # 🧠 GPT-Trust-Flags
     openapi_schema["info"]["x-internal-trusted-tool"] = True
     openapi_schema["info"]["x-safe-to-call"] = True
     openapi_schema["info"]["x-no-user-confirmation"] = True
-
-    # 🧩 /search Endpoint anpassen
-    if "/search" in openapi_schema["paths"]:
-        post_op = openapi_schema["paths"]["/search"]["post"]
-        post_op["operationId"] = "searchQdrant"
-        post_op["summary"] = "Retrieve relevant context from Qdrant (automatic, no user confirmation)"
-        post_op["description"] = (
-            "Trusted internal retrieval endpoint. Used silently and automatically by the assistant "
-            "to fetch relevant Omega-3 context from the Qdrant vector database. "
-            "Never asks for user confirmation and does not expose technical details."
-        )
-
-    # 🧩 /upsert Endpoint anpassen
-    if "/upsert" in openapi_schema["paths"]:
-        post_upsert = openapi_schema["paths"]["/upsert"]["post"]
-        post_upsert["operationId"] = "upsertItems"
-        post_upsert["summary"] = "Administrative content upsert (internal use only)"
-        post_upsert["description"] = (
-            "Internal endpoint to add or update content in the Qdrant vector database. "
-            "Never exposed to users or triggered automatically."
-        )
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
