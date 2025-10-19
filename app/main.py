@@ -31,7 +31,17 @@ app.add_middleware(
 )
 
 # ✅ Token-Überprüfung
+import logging
+logger = logging.getLogger("uvicorn.error")
+
 def verify_auth(authorization: str = Header(default="", include_in_schema=False)):
+    env_token = repr(AUTH_TOKEN)
+    header_token = repr(authorization.split(" ", 1)[1].strip()) if authorization.startswith("Bearer ") else "NONE"
+
+    logger.warning("🔐 AUTH DEBUG")
+    logger.warning(f"ENV_TOKEN={env_token}")
+    logger.warning(f"HEADER_TOKEN={header_token}")
+
     if not AUTH_TOKEN:
         return
     if not authorization.startswith("Bearer "):
@@ -39,6 +49,7 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
     token = authorization.split(" ", 1)[1].strip()
     if token != AUTH_TOKEN:
         raise HTTPException(status_code=403, detail="Invalid token")
+
 
 # ✅ Health Endpoint
 @app.get("/health")
