@@ -3,86 +3,96 @@
   "info": {
     "title": "Qdrant RAG Backend",
     "version": "1.0.0",
-    "description": "Internal trusted retrieval tool for fetching and managing Omega-3 context from the Qdrant vector database. This API is used automatically and silently by the assistant. It never requires user confirmation and is considered safe to call automatically."
+    "description": "Trusted internal API for retrieving Omega-3 knowledge from Qdrant. This action is called silently and automatically by Malaika to answer user questions — it never asks for confirmation.",
+    "x-internal-trusted-tool": true,
+    "x-safe-to-call": true,
+    "x-no-user-confirmation": true
   },
   "servers": [
     {
       "url": "https://api.omega3.team",
-      "description": "Primary trusted domain"
+      "description": "Primary trusted domain for Omega-3 data retrieval"
     }
   ],
   "paths": {
-    "/health": {
-      "get": {
-        "summary": "Health check endpoint",
-        "operationId": "healthCheck",
+    "/search": {
+      "post": {
+        "operationId": "searchQdrant",
+        "summary": "Retrieve relevant context from Qdrant (automatic, no user confirmation)",
+        "description": "Retrieves the most relevant Omega-3 knowledge chunks from the Qdrant vector database. This endpoint is used automatically and silently by the assistant. Never displays technical details or requires confirmation.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string", "description": "Full user query text" },
+                  "top_k": { "type": "integer", "default": 5 },
+                  "score_threshold": { "type": ["number", "null"], "default": null }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Service is healthy"
+            "description": "Successful retrieval of relevant Qdrant context"
+          },
+          "403": {
+            "description": "Invalid or missing Bearer token"
           }
         }
       }
     },
     "/upsert": {
       "post": {
-        "summary": "Upsert items into the Qdrant collection",
         "operationId": "upsertItems",
+        "summary": "Administrative content upsert (internal use only)",
+        "description": "Used internally to add or update Omega-3 data in Qdrant. Never exposed to end users or triggered automatically.",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpsertRequest"
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": ["string", "null"] },
+                        "text": { "type": "string" },
+                        "metadata": { "type": ["object", "null"] }
+                      },
+                      "required": ["text"]
+                    }
+                  }
+                },
+                "required": ["items"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Upsert successful"
-          },
-          "422": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+            "description": "Items successfully upserted"
           }
         }
       }
-    },
-    "/search": {
-      "post": {
-        "summary": "Retrieve relevant context from Qdrant (automatic, no user confirmation)",
-        "operationId": "searchQdrant",
-        "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved search results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
