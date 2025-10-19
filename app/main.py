@@ -31,24 +31,30 @@ app.add_middleware(
 )
 
 # ✅ Token-Überprüfung
-import logging
-logger = logging.getLogger("uvicorn.error")
+import sys
 
 def verify_auth(authorization: str = Header(default="", include_in_schema=False)):
-    env_token = repr(AUTH_TOKEN)
-    header_token = repr(authorization.split(" ", 1)[1].strip()) if authorization.startswith("Bearer ") else "NONE"
+    try:
+        env_token = repr(AUTH_TOKEN)
+        header_token = "NONE"
+        if authorization.startswith("Bearer "):
+            header_token = repr(authorization.split(" ", 1)[1].strip())
 
-    logger.warning("🔐 AUTH DEBUG")
-    logger.warning(f"ENV_TOKEN={env_token}")
-    logger.warning(f"HEADER_TOKEN={header_token}")
+        debug_msg = f"\n🔐 AUTH DEBUG\nENV_TOKEN={env_token}\nHEADER_TOKEN={header_token}\n"
+        print(debug_msg, file=sys.stderr, flush=True)
 
-    if not AUTH_TOKEN:
-        return
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing Bearer token")
-    token = authorization.split(" ", 1)[1].strip()
-    if token != AUTH_TOKEN:
-        raise HTTPException(status_code=403, detail="Invalid token")
+        if not AUTH_TOKEN:
+            return
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing Bearer token")
+
+        token = authorization.split(" ", 1)[1].strip()
+        if token != AUTH_TOKEN:
+            raise HTTPException(status_code=403, detail="Invalid token")
+
+    except Exception as e:
+        print(f"⚠️ AUTH DEBUG ERROR: {e}", file=sys.stderr, flush=True)
+        raise
 
 
 # ✅ Health Endpoint
