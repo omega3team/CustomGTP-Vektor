@@ -55,7 +55,7 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
 
     if token_bytes != env_bytes:
         print(
-            f"⚠️ TOKEN BYTE MISMATCH\n"
+            f⚠️ TOKEN BYTE MISMATCH\n"
             f"token_hex={binascii.hexlify(token_bytes).decode()}\n"
             f"env_hex={binascii.hexlify(env_bytes).decode()}",
             file=sys.stderr,
@@ -65,10 +65,12 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
 
     print("✅ TOKEN MATCH — BYTES ARE IDENTICAL", file=sys.stderr, flush=True)
 
+
 # ✅ Health Endpoint
 @app.get("/health")
 def health():
     return {"ok": True}
+
 
 # ✅ Upsert Endpoint
 @app.post(
@@ -76,9 +78,13 @@ def health():
     operation_id="upsertItems",  # 👈 wichtig!
     summary="Administrative upsert (internal only)",
     description="Internal endpoint for updating or inserting data into Qdrant. Never triggered automatically.",
-    dependencies=[Depends(verify_auth)]
+    dependencies=[Depends(verify_auth)],
 )
 def upsert(req: UpsertRequest):
+    """Admin endpoint: add or update items in Qdrant."""
+    ids = upsert_items(req.items)
+    return {"upserted": ids}
+
 
 # ✅ Search Endpoint
 @app.post(
@@ -87,13 +93,22 @@ def upsert(req: UpsertRequest):
     operation_id="searchQdrant",  # 👈 wichtig!
     summary="Retrieve relevant context from Qdrant (automatic, no user confirmation)",
     description="Retrieves Omega-3 knowledge silently and automatically from Qdrant. No user confirmation required.",
-    dependencies=[Depends(verify_auth)]
+    dependencies=[Depends(verify_auth)],
 )
 def search(req: SearchRequest):
+    """Main endpoint used by GPT to retrieve Qdrant results."""
+    results = retrieve(
+        query=req.query,
+        top_k=req.top_k,
+        score_threshold=req.score_threshold,
+    )
+    return SearchResponse(query=req.query, results=results)
+
 
 # ✅ Custom OpenAPI Schema
 @app.get("/openapi.json", include_in_schema=False)
 def custom_openapi():
+    """Provide custom OpenAPI schema for GPT Builder."""
     if app.openapi_schema:
         return app.openapi_schema
 
