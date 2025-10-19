@@ -10,7 +10,6 @@ from .schemas import UpsertRequest, SearchRequest, SearchResponse
 from .rag import upsert_items, retrieve
 
 load_dotenv()
-
 AUTH_TOKEN = os.getenv("AUTH_TOKEN")
 
 # ✅ App-Initialisierung
@@ -42,7 +41,11 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
     if authorization.startswith("Bearer "):
         header_token = authorization.split(" ", 1)[1].strip()
 
-    print(f"\n🔐 AUTH DEBUG\nENV_TOKEN={repr(env_token)}\nHEADER_TOKEN={repr(header_token)}\n", file=sys.stderr, flush=True)
+    print(
+        f"\n🔐 AUTH DEBUG\nENV_TOKEN={repr(env_token)}\nHEADER_TOKEN={repr(header_token)}\n",
+        file=sys.stderr,
+        flush=True,
+    )
 
     if not AUTH_TOKEN:
         return
@@ -55,7 +58,7 @@ def verify_auth(authorization: str = Header(default="", include_in_schema=False)
 
     if token_bytes != env_bytes:
         print(
-            f⚠️ TOKEN BYTE MISMATCH\n"
+            f"⚠️ TOKEN BYTE MISMATCH\n"
             f"token_hex={binascii.hexlify(token_bytes).decode()}\n"
             f"env_hex={binascii.hexlify(env_bytes).decode()}",
             file=sys.stderr,
