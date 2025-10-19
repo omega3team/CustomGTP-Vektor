@@ -135,6 +135,9 @@ def custom_openapi():
     openapi_schema["info"]["x-safe-to-call"] = True
     openapi_schema["info"]["x-no-user-confirmation"] = True
     openapi_schema["x-gpt-tool-name"] = "QdrantRAGBackend"  # 👈 expliziter Toolname
+    openapi_schema["x-plugin-name"] = "QdrantRAGBackend"
+    openapi_schema["x-plugin-id"] = "QdrantRAGBackend"
+
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
